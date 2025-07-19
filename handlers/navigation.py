@@ -29,8 +29,8 @@ async def cmd_start(message: types.Message):
 @router.callback_query(StartCallback.filter())
 async def start_menu(call: types.CallbackQuery):
     image = FSInputFile("images/main_banner.jpg")
-    await call.message.edit_media(
-            media=InputMediaPhoto(media=image, caption="👋 Вітаю! Це бот-меню на тиждень. Оберіть калорійність:", parse_mode="HTML"),
+    await call.message.edit_caption(
+            caption="Оберіть калорійність:",
             reply_markup=kilo_keyboard()
         )
 
@@ -54,8 +54,9 @@ async def show_days(call: types.CallbackQuery, callback_data: MenuCallback):
 async def show_meals(call: types.CallbackQuery, callback_data: DayCallback):
     day = WeekDay[callback_data.day]
     kilo_type = KiloType(int(callback_data.kilo_type))
-    await call.message.edit_caption(
-        caption=f"Оберіть прийом їжі для {day.value}:", 
+    image = FSInputFile("images/main_banner.jpg")
+    await call.message.edit_media(
+        media=InputMediaPhoto(media=image, caption=f"Оберіть прийом їжі для {day.value}:", parse_mode="HTML"),
         reply_markup=meals_keyboard(day, kilo_type)
     )
 

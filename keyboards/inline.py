@@ -41,11 +41,13 @@ def menu_keyboard():
     )
 
 def days_keyboard(kilo_type: KiloType):
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
+    inline_keyboard=[
             [InlineKeyboardButton(text=day.value, callback_data=DayCallback(day=day.name, kilo_type=str(kilo_type.value)).pack())]
             for day in WeekDay
         ]
+    inline_keyboard.append([InlineKeyboardButton(text="⬅️ До вибору калорійності", callback_data=StartCallback(action="start").pack())])
+    return InlineKeyboardMarkup(
+        inline_keyboard=inline_keyboard
     )
 
 def meals_keyboard(day: WeekDay, kilo_type: KiloType):
