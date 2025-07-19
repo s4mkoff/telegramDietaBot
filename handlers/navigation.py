@@ -35,15 +35,20 @@ async def show_meals(call: types.CallbackQuery, callback_data: DayCallback, bot:
 
 @router.callback_query(MealCallback.filter(F.action == "show"))
 async def show_meal(call: types.CallbackQuery, callback_data: MealCallback, bot: Bot):
-    answer = get_answer(callback_data.day, callback_data.meal)
+    day = callback_data.day
+    meal = callback_data.meal
+    answer = get_answer(day, meal)
     image = FSInputFile(answer.imageSrc)
     
+    caption = f"{day.value} - {meal.value}\n\n{answer.text}"
+
     await call.message.delete()
     await bot.send_photo(
         chat_id=call.message.chat.id,
         photo=image,
-        caption=answer.text,
-        reply_markup=meal_nav_keyboard(callback_data.day, callback_data.meal)
+        caption=caption,
+        reply_markup=meal_nav_keyboard(day, meal),
+        parse_mode="HTML"
     )
     await call.answer()
 
@@ -58,15 +63,17 @@ async def next_meal_handler(call: types.CallbackQuery, callback_data: MealCallba
     if current_meal_index < len(meal_types) - 1:
         next_meal_type = meal_types[current_meal_index + 1]
     else:
-        # This case should not be reached if the keyboard logic is correct
         await call.answer("Це останній прийом їжі на сьогодні.")
         return
 
     answer = get_answer(current_day, next_meal_type)
     image = FSInputFile(answer.imageSrc)
+    
+    caption = f"{current_day.value} - {next_meal_type.value}\n\n{answer.text}"
 
     await call.message.edit_media(
-        media=InputMediaPhoto(media=image, caption=answer.text),
-        reply_markup=meal_nav_keyboard(current_day, next_meal_type)
+        media=InputMediaPhoto(media=image, caption=caption),
+        reply_markup=meal_nav_keyboard(current_day, next_meal_type),
+        parse_mode="HTML"
     )
     await call.answer()
