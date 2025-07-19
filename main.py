@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart
 from aiogram import F
-from aiogram.types import FSInputFile
+from aiogram.types import FSInputFile, InputMediaPhoto
 from dotenv import load_dotenv
 from menu import newWeekMenu
 import os
@@ -103,20 +103,19 @@ async def back_to_meals(call: types.CallbackQuery):
 
 @dp.callback_query(F.data.startswith("next_meal_"))
 async def next_meal(call: types.CallbackQuery):
-    _, day_idx, meal_idx = call.data.split("_")
-    day_idx, meal_idx = int(day_idx), int(meal_idx)
+    parts = call.data.split("_")
+    day_idx, meal_idx = int(parts[-2]), int(parts[-1])
+
     if meal_idx < 4:
         meal_idx += 1
     else:
         day_idx += 1
         meal_idx = 0
+
     answer = get_answer(day_idx, meal_idx)
     image = FSInputFile(answer.imageSrc)
-    await call.message.delete()
-    await bot.send_photo(
-        chat_id=call.message.chat.id,
-        photo=image,
-        caption=answer.text,
+    await call.message.edit_media(
+        media=InputMediaPhoto(media=image, caption=answer.text),
         reply_markup=meal_nav_keyboard(day_idx, meal_idx)
     )
     await call.answer()
