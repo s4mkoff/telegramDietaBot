@@ -22,7 +22,7 @@ class MealType(Enum):
 @dataclass
 class Meal:
     mealType: MealType
-    answer: Answer
+    answers: list[Answer]
 
 @dataclass
 class Day:

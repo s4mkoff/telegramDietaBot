@@ -1,6 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from models.Days import WeekDay, MealType
+from menu import newWeekMenu
 
 class MenuCallback(CallbackData, prefix="menu"):
     action: str
@@ -12,6 +13,7 @@ class MealCallback(CallbackData, prefix="meal"):
     day: WeekDay
     meal: MealType
     action: str
+    variant_index: int = 0
 
 def menu_keyboard():
     return InlineKeyboardMarkup(
@@ -36,11 +38,16 @@ def meals_keyboard(day: WeekDay):
     keyboard.append([InlineKeyboardButton(text="⬅️ До вибору дня", callback_data=MenuCallback(action="days").pack())])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-def meal_nav_keyboard(day: WeekDay, meal: MealType):
+def meal_nav_keyboard(day: WeekDay, meal: MealType, variant_index: int):
     buttons = [
         InlineKeyboardButton(text="⬅️ До вибору прийому", callback_data=DayCallback(day=day).pack())
     ]
     
+    meal_obj = newWeekMenu.days[day].meals[meal]
+    if len(meal_obj.answers) > 1:
+        next_variant_index = (variant_index + 1) % len(meal_obj.answers)
+        buttons.append(InlineKeyboardButton(text="Інший варіант", callback_data=MealCallback(day=day, meal=meal, action="show", variant_index=next_variant_index).pack()))
+
     meal_types = list(MealType)
     current_meal_index = meal_types.index(meal)
     

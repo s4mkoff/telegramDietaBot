@@ -11,8 +11,8 @@ from keyboards.inline import (
 
 router = Router()
 
-def get_answer(day: WeekDay, meal: MealType):
-    return newWeekMenu.days[day].meals[meal].answer
+def get_answer(day: WeekDay, meal: MealType, variant_index: int = 0):
+    return newWeekMenu.days[day].meals[meal].answers[variant_index]
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
@@ -37,19 +37,26 @@ async def show_meals(call: types.CallbackQuery, callback_data: DayCallback, bot:
 async def show_meal(call: types.CallbackQuery, callback_data: MealCallback, bot: Bot):
     day = callback_data.day
     meal = callback_data.meal
-    answer = get_answer(day, meal)
+    variant_index = callback_data.variant_index
+    answer = get_answer(day, meal, variant_index)
     image = FSInputFile(answer.imageSrc)
     
     caption = f"{day.value} - {meal.value}\n\n{answer.text}"
 
-    await call.message.delete()
-    await bot.send_photo(
-        chat_id=call.message.chat.id,
-        photo=image,
-        caption=caption,
-        reply_markup=meal_nav_keyboard(day, meal),
-        parse_mode="HTML"
-    )
+    if call.message.photo:
+        await call.message.edit_media(
+            media=InputMediaPhoto(media=image, caption=caption, parse_mode="HTML"),
+            reply_markup=meal_nav_keyboard(day, meal, variant_index)
+        )
+    else:
+        await call.message.delete()
+        await bot.send_photo(
+            chat_id=call.message.chat.id,
+            photo=image,
+            caption=caption,
+            reply_markup=meal_nav_keyboard(day, meal, variant_index),
+            parse_mode="HTML"
+        )
     await call.answer()
 
 @router.callback_query(MealCallback.filter(F.action == "next"))
@@ -72,8 +79,8 @@ async def next_meal_handler(call: types.CallbackQuery, callback_data: MealCallba
     caption = f"{current_day.value} - {next_meal_type.value}\n\n{answer.text}"
 
     await call.message.edit_media(
-        media=InputMediaPhoto(media=image, caption=caption),
-        reply_markup=meal_nav_keyboard(current_day, next_meal_type),
-        parse_mode="HTML"
+        media=InputMediaPhoto(media=image, caption=caption, parse_mode="HTML"),
+        reply_markup=meal_nav_keyboard(current_day, next_meal_type, 0)
     )
     await call.answer()
+
