@@ -21,6 +21,9 @@ class MealCallback(CallbackData, prefix="meal"):
     action: str
     variant_index: int = 0
     kilo_type: str
+    
+class StartCallback(CallbackData, prefix="start"):
+    action: str
 
 def kilo_keyboard():
     return InlineKeyboardMarkup(
@@ -43,7 +46,7 @@ def days_keyboard(kilo_type: KiloType):
             for day in WeekDay
         ]
     inline_keyboard.append(
-            [InlineKeyboardButton(text="⬅️ До вибору кілокалорій", callback_data=MenuCallback(action="kilo").pack())]
+            [InlineKeyboardButton(text="⬅️ До вибору кілокалорій", callback_data=StartCallback(action="start").pack())]
         )
     return InlineKeyboardMarkup(
         inline_keyboard=inline_keyboard

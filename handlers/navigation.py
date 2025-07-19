@@ -7,7 +7,7 @@ from models.Days import WeekDay, MealType
 from models.Answer import KiloType
 from keyboards.inline import (
     menu_keyboard, days_keyboard, meals_keyboard, meal_nav_keyboard, kilo_keyboard,
-    MenuCallback, DayCallback, MealCallback, KiloCallback
+    MenuCallback, DayCallback, MealCallback, KiloCallback, StartCallback
 )
 
 router = Router()
@@ -15,38 +15,54 @@ router = Router()
 def get_answer(day: WeekDay, meal: MealType, kilo_type: KiloType, variant_index: int = 0):
     return newWeekMenu.days[day].meals[meal].answers[variant_index].text[kilo_type]
 
+#Start
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
-    await message.answer("👋 Вітаю! Це бот-меню на тиждень. Оберіть калорійність:", reply_markup=kilo_keyboard())
+    image = FSInputFile("images/main_banner.jpg")
+    await message.answer_photo(
+        photo=image,
+        caption="👋 Вітаю! Це бот-меню на тиждень. Оберіть калорійність:",
+        reply_markup=kilo_keyboard()
+   )
+    
+# Callbacks
+@router.callback_query(StartCallback.filter())
+async def start_menu(call: types.CallbackQuery):
+    image = FSInputFile("images/main_banner.jpg")
+    await call.message.edit_media(
+            media=InputMediaPhoto(media=image, caption="👋 Вітаю! Це бот-меню на тиждень. Оберіть калорійність:", parse_mode="HTML"),
+            reply_markup=kilo_keyboard()
+        )
 
 @router.callback_query(KiloCallback.filter())
 async def show_menu(call: types.CallbackQuery, callback_data: KiloCallback):
     kilo_type = KiloType(int(callback_data.kilo_type))
-    await call.message.edit_text(
-        f"Ви обрали {kilo_type.value} ккал. Оберіть день:",
+    await call.message.edit_caption(
+        caption = f"Ви обрали {kilo_type.value} ккал. Оберіть день:",
         reply_markup=days_keyboard(kilo_type)
     )
-    await call.answer()
 
 @router.callback_query(MenuCallback.filter(F.action == "days"))
 async def show_days(call: types.CallbackQuery, callback_data: MenuCallback):
     kilo_type = KiloType(int(callback_data.kilo_type)) if callback_data.kilo_type else None
+    ## todo: delete
     if not kilo_type:
         await call.answer("Будь ласка, спочатку оберіть калорійність.", show_alert=True)
         return
-    await call.message.edit_text("Оберіть день:", reply_markup=days_keyboard(kilo_type))
-    await call.answer()
+    await call.message.edit_caption(
+        caption="Оберіть день:",
+        reply_markup=days_keyboard(kilo_type)
+    )
 
 @router.callback_query(DayCallback.filter())
 async def show_meals(call: types.CallbackQuery, callback_data: DayCallback, bot: Bot):
     kilo_type = KiloType(int(callback_data.kilo_type))
-    await call.message.delete()
-    await bot.send_message(
-        chat_id=call.message.chat.id,
-        text=f"Оберіть прийом їжі для {callback_data.day.value}:", 
-        reply_markup=meals_keyboard(callback_data.day, kilo_type)
+    day = callback_data.day
+    #todo: check if media not banner for not load new media
+    await call.message.edit_media(
+        media=InputMediaPhoto(media=FSInputFile("images/main_banner.jpg"), caption=f"Оберіть прийом їжі для {callback_data.day.value}:", parse_mode="HTML"),
+        reply_markup=meals_keyboard(day, kilo_type)
     )
-    await call.answer()
 
 @router.callback_query(MealCallback.filter(F.action == "show"))
 async def show_meal(call: types.CallbackQuery, callback_data: MealCallback, bot: Bot):
@@ -57,7 +73,7 @@ async def show_meal(call: types.CallbackQuery, callback_data: MealCallback, bot:
     answer_text = get_answer(day, meal, kilo_type, variant_index)
     image = FSInputFile(newWeekMenu.days[day].meals[meal].answers[variant_index].imageSrc)
     
-    caption = f"{day.value} - {meal.value}\n\n{answer_text}"
+    caption = f"{day.value} - {meal.value} - {kilo_type.value}\n\n{answer_text}"
 
     if call.message.photo:
         await call.message.edit_media(
@@ -93,11 +109,11 @@ async def next_meal_handler(call: types.CallbackQuery, callback_data: MealCallba
     answer_text = get_answer(current_day, next_meal_type, kilo_type)
     image = FSInputFile(newWeekMenu.days[current_day].meals[next_meal_type].answers[0].imageSrc)
     
-    caption = f"{current_day.value} - {next_meal_type.value}\n\n{answer_text}"
+    caption = f"{current_day.value} - {next_meal_type.value} - {kilo_type.value}\n\n{answer_text}"
 
     await call.message.edit_media(
         media=InputMediaPhoto(media=image, caption=caption, parse_mode="HTML"),
         reply_markup=meal_nav_keyboard(current_day, next_meal_type, 0, kilo_type)
     )
-    await call.answer()
+    
 
