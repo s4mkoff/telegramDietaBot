@@ -11,6 +11,12 @@ from keyboards.inline import (
 
 router = Router()
 
+async def on_startup(bot: Bot, base_url: str):
+    await bot.set_webhook(f"{base_url}/webhook")
+
+async def on_shutdown(bot: Bot):
+    await bot.delete_webhook()
+
 def get_answer(day: WeekDay, meal: MealType, variant_index: int = 0):
     return newWeekMenu.days[day].meals[meal].answers[variant_index]
 
