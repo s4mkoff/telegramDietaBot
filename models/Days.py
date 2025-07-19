@@ -1,6 +1,6 @@
 from enum import Enum
 from dataclasses import dataclass
-from typing import List
+from typing import Dict
 from models.Answer import Answer
 
 class WeekDay(Enum):
@@ -27,13 +27,9 @@ class Meal:
 @dataclass
 class Day:
     dayType: WeekDay
-    breakfast: Meal
-    morningSnack: Meal
-    lunch: Meal
-    eveningSnack: Meal
-    dinner: Meal
+    meals: Dict[MealType, Meal]
 
 @dataclass
 class Week:
-    days: List[Day]
+    days: Dict[WeekDay, Day]
         
