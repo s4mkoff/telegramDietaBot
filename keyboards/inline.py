@@ -29,12 +29,12 @@ def days_keyboard():
     )
 
 def meals_keyboard(day: WeekDay):
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text=meal.value, callback_data=MealCallback(day=day, meal=meal, action="show").pack())]
-            for meal in MealType
-        ]
-    )
+    keyboard = [
+        [InlineKeyboardButton(text=meal.value, callback_data=MealCallback(day=day, meal=meal, action="show").pack())]
+        for meal in MealType
+    ]
+    keyboard.append([InlineKeyboardButton(text="⬅️ До вибору дня", callback_data=MenuCallback(action="days").pack())])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 def meal_nav_keyboard(day: WeekDay, meal: MealType):
     buttons = [
@@ -44,10 +44,9 @@ def meal_nav_keyboard(day: WeekDay, meal: MealType):
     meal_types = list(MealType)
     current_meal_index = meal_types.index(meal)
     
-    week_days = list(WeekDay)
-    current_day_index = week_days.index(day)
-
-    if current_day_index < len(week_days) - 1 or current_meal_index < len(meal_types) - 1:
+    if current_meal_index < len(meal_types) - 1:
         buttons.append(InlineKeyboardButton(text="➡️ Далі", callback_data=MealCallback(day=day, meal=meal, action="next").pack()))
+    else:
+        buttons.append(InlineKeyboardButton(text="✅ Завершити", callback_data=DayCallback(day=day).pack()))
 
     return InlineKeyboardMarkup(inline_keyboard=[buttons])

@@ -55,24 +55,18 @@ async def next_meal_handler(call: types.CallbackQuery, callback_data: MealCallba
     meal_types = list(MealType)
     current_meal_index = meal_types.index(current_meal)
 
-    week_days = list(WeekDay)
-    current_day_index = week_days.index(current_day)
-
     if current_meal_index < len(meal_types) - 1:
         next_meal_type = meal_types[current_meal_index + 1]
-        next_day = current_day
-    elif current_day_index < len(week_days) - 1:
-        next_day = week_days[current_day_index + 1]
-        next_meal_type = meal_types[0]
     else:
-        await call.answer("Це останній прийом їжі на тиждень!")
+        # This case should not be reached if the keyboard logic is correct
+        await call.answer("Це останній прийом їжі на сьогодні.")
         return
 
-    answer = get_answer(next_day, next_meal_type)
+    answer = get_answer(current_day, next_meal_type)
     image = FSInputFile(answer.imageSrc)
 
     await call.message.edit_media(
         media=InputMediaPhoto(media=image, caption=answer.text),
-        reply_markup=meal_nav_keyboard(next_day, next_meal_type)
+        reply_markup=meal_nav_keyboard(current_day, next_meal_type)
     )
     await call.answer()
