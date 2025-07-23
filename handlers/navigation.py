@@ -1,7 +1,7 @@
 from aiogram import Router, F, Bot
 from aiogram import types
 from aiogram.filters import CommandStart
-from aiogram.types import FSInputFile, InputMediaPhoto
+from aiogram.types import BufferedInputFile, InputMediaPhoto
 from menu import newWeekMenu
 from models.Days import WeekDay, MealType
 from models.Answer import KiloType
@@ -18,7 +18,10 @@ def get_answer(day: WeekDay, meal: MealType, kilo_type: KiloType, variant_index:
 #Start
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
-    image = FSInputFile("images/main_banner.jpg")
+    image_path = "images/main_banner.jpg"
+    with open(image_path, "rb") as image_file:
+        image_bytes = image_file.read()
+    image = BufferedInputFile(image_bytes, filename="main_banner.jpg")
     await message.answer_photo(
         photo=image,
         caption="👋 Вітаю! Це бот-меню на тиждень. Оберіть калорійність:",
@@ -28,7 +31,10 @@ async def cmd_start(message: types.Message):
 # Callbacks
 @router.callback_query(StartCallback.filter())
 async def start_menu(call: types.CallbackQuery):
-    image = FSInputFile("images/main_banner.jpg")
+    image_path = "images/main_banner.jpg"
+    with open(image_path, "rb") as image_file:
+        image_bytes = image_file.read()
+    image = BufferedInputFile(image_bytes, filename="main_banner.jpg")
     await call.message.edit_caption(
             caption="Оберіть калорійність:",
             reply_markup=kilo_keyboard()
@@ -54,7 +60,10 @@ async def show_days(call: types.CallbackQuery, callback_data: MenuCallback):
 async def show_meals(call: types.CallbackQuery, callback_data: DayCallback):
     day = WeekDay[callback_data.day]
     kilo_type = KiloType(int(callback_data.kilo_type))
-    image = FSInputFile("images/main_banner.jpg")
+    image_path = "images/main_banner.jpg"
+    with open(image_path, "rb") as image_file:
+        image_bytes = image_file.read()
+    image = BufferedInputFile(image_bytes, filename="main_banner.jpg")
     await call.message.edit_media(
         media=InputMediaPhoto(media=image, caption=f"Оберіть прийом їжі для {day.value}:", parse_mode="HTML"),
         reply_markup=meals_keyboard(day, kilo_type)
@@ -67,7 +76,10 @@ async def show_meal(call: types.CallbackQuery, callback_data: MealCallback, bot:
     variant_index = callback_data.variant_index
     kilo_type = KiloType(int(callback_data.kilo_type))
     answer_text = get_answer(day, meal, kilo_type, variant_index)
-    image = FSInputFile(newWeekMenu.days[day].meals[meal].answers[variant_index].imageSrc)
+    image_path = newWeekMenu.days[day].meals[meal].answers[variant_index].imageSrc
+    with open(image_path, "rb") as image_file:
+        image_bytes = image_file.read()
+    image = BufferedInputFile(image_bytes, filename=image_path)
     caption = f"{day.value} - {meal.value} - {kilo_type.value}ккал\n\n{answer_text}"
     await call.message.edit_media(
         media=InputMediaPhoto(media=image, caption=caption, parse_mode="HTML"),
@@ -91,7 +103,10 @@ async def next_meal_handler(call: types.CallbackQuery, callback_data: MealCallba
         return
 
     answer_text = get_answer(current_day, next_meal_type, kilo_type)
-    image = FSInputFile(newWeekMenu.days[current_day].meals[next_meal_type].answers[0].imageSrc)
+    image_path = newWeekMenu.days[current_day].meals[next_meal_type].answers[0].imageSrc
+    with open(image_path, "rb") as image_file:
+        image_bytes = image_file.read()
+    image = BufferedInputFile(image_bytes, filename=image_path)
     
     caption = f"{current_day.value} - {next_meal_type.value} - {kilo_type.value}ккал\n\n{answer_text}"
 
